@@ -1,7 +1,7 @@
 # fast_api_learning
-A repo consist of my learning of fast_api
+A repo consists of my learning of fast_api
 
-# to run 🚀
+# run command 🚀
 unvicorn <path to your app foler>.<file_name>:app --reload
 
 # basics_1.py
