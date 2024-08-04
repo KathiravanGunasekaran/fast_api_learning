@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from ..schemas import User, UserResponse
 
-
-router = APIRouter(prefix="/api/v1/users")
+router = APIRouter(prefix="/api/v1/users",tags=["Users"])
 
 @router.get("/", response_model=List[UserResponse])
 def get_users(db: Session = Depends(get_db)):
