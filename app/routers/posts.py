@@ -6,7 +6,8 @@ from typing import List
 from ..schemas import CreatePost, PostResponse
 
 # since all the routes are same expect for those has ID we can use this prefix to define out route
-router = APIRouter(prefix="/api/v1/posts") 
+# tags is simply to Group the fastapi route in the documentation here http://127.0.0.1:8000/docs/
+router = APIRouter(prefix="/api/v1/posts", tags=["Posts"]) 
 
 # we are sending list of posts so we are converting the post model to list of post model
 @router.get("/", response_model=List[PostResponse])
