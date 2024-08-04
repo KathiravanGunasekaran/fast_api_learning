@@ -19,7 +19,8 @@ so, we can use "from urllib.parse import quote" library to parse the values used
 '''
 
 user = ""
-password = quote("")
+#password = quote("") ---> use this if you have special characters in your DB password
+password = ""
 host = ""
 dbname = ""
 
