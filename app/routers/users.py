@@ -6,17 +6,15 @@ from typing import List
 from ..schemas import User, UserResponse
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/users")
 
-
-@router.get("/api/v1/users", response_model=List[UserResponse])
+@router.get("/", response_model=List[UserResponse])
 def get_users(db: Session = Depends(get_db)):
     users = db.query(models.User).all()
     return users
 
-
 @router.post(
-    "/api/v1/user",
+    "/",
     status_code=status.HTTP_201_CREATED,
 )
 # db: Session = Depends(get_db) -> creating the session dependency
@@ -30,16 +28,14 @@ def register_user(user: User, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return {"status": "success", "message": f"A new user with {new_user.email} registered"}
 
-
-@router.get("/api/v1/user/{id}", response_model=UserResponse)
+@router.get("/{id}", response_model=UserResponse)
 def get_user(id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()
     if user:
         return user
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"user with {id} not found")
 
-
-@router.delete("/api/v1/user/{id}")
+@router.delete("/{id}")
 def delete_user(id: int, db: Session = Depends(get_db)):
     user_query = db.query(models.User).filter(models.User.id == id)
     if user_query.first() == None:
@@ -48,11 +44,10 @@ def delete_user(id: int, db: Session = Depends(get_db)):
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-
 """
 not needed for now, need a patch call rather than doing put here I guess
 
-@router.put("/api/v1/user/{id}", response_model=UserResponse)
+@router.put("/{id}", response_model=UserResponse)
 def update_user(id: int, updated_user: User, db: Session = Depends(get_db)):
     user_query = db.query(models.User).filter(models.User.id == id)
     if user_query.first() == None:
