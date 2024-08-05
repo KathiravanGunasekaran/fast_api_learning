@@ -1,20 +1,16 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
-
 # this is py-dyantic model pr schema and this is referred in path operations to shape the req body and response
 # this is just a validation layer
-
 
 class PostBase(BaseModel):
     title: str
     content: str
     published: bool = True
 
-
 class CreatePost(PostBase):
     pass
-
 
 class PostResponse(PostBase):
     id: int
@@ -29,11 +25,9 @@ class PostResponse(PostBase):
     class Config:
         orm_mode = True
 
-
 class User(BaseModel):
     email: EmailStr  # email str will validate particularly for valid email format
     password: str
-
 
 class UserResponse(BaseModel):
     id: int
