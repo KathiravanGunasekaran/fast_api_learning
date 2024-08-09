@@ -8,31 +8,40 @@ from ..oauth2 import get_current_user
 
 router = APIRouter(prefix="/api/v1/posts", tags=["Posts"])
 
-'''
+"""
 # we are sending list of posts so we are converting the post model to list of post model
 
 # we have add this session as parameter to this function every-time it's a dependency injection that we are doing
-'''
+"""
 @router.get("/", response_model=List[PostResponse])
-async def get_posts(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    post = db.query(models.Post).all()
+async def get_posts(db: Session = Depends(get_db), current_user=Depends(get_current_user), limit: int = 10):
+    post = db.query(models.Post).filter(models.Post.owner_id == current_user.id).limit(limit).all()
     return post
 
-'''
+"""
 adding the model to the response we are getting from the server that is response_model=<model of the response>
 
 referring the model that we created in model.py and adding the values in it like how we do in insert into query
 new_post = models.Post(title=post.title, content=post.content, published=post.published) - one way
-'''
+
+"""
+
+"""
+- we need to expand the post that's coming from client to dict because
+at first it will look like this -> title='fourth 1' content='Hey I am fourth' published=False
+but when we expand by post.dict() or post.model_dump it will become a dictionary
+- then we need to add it to DB
+- commit the changes to DB
+- refresh the DB and put the changes in new_post variable 
+here in background it does the returning sql functionality. that's why you are getting the created post response
+
+"""
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
 async def create_post(post: CreatePost, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    print(current_user)
-    new_post = models.Post(
-        **post.dict()
-    )  # second method this is because what if we have more fields we can't type manually so we are unpacking the dict
-    db.add(new_post) # adding to the DB
-    db.commit()  # committing the changes to the db
-    db.refresh(new_post) # kind of returning in raw sql what it does is we are retrieving the newly created post and storing it in the new_post
+    new_post = models.Post(owner_id=current_user.id, **post.dict())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
     return new_post
 
 """
@@ -49,13 +58,11 @@ db.query(models.Post).filter_by(id=str(id)).one() ---> you can try like this
 """
 @router.get("/{id}", response_model=PostResponse)
 async def get_post(id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+    post = db.query(models.Post).filter(models.Post.id == id, models.Post.owner_id == current_user.id).first()
     if post:
         return post
     else:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"post with id: {id} not found")
-
 
 @router.put("/{id}", response_model=PostResponse)
 async def update_post(
@@ -65,16 +72,20 @@ async def update_post(
     post = post_query.first()
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with {id} does not exist")
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Not Authorized to perform any actions")
     post_query.update(updated_post.dict(), synchronize_session=False)
     db.commit()
     return post_query.first()
 
-
 @router.delete("/{id}")
 async def delete_post(id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    post = db.query(models.Post).filter(models.Post.id == id)
-    if post.first() == None:
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    post = post_query.first()
+    if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with {id} does not exist")
-    post.delete(synchronize_session=False)
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Not Authorized to perform any actions")
+    post_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
