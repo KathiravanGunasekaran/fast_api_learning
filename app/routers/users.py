@@ -5,12 +5,14 @@ from sqlalchemy.orm import Session
 from typing import List
 from ..schemas import User, UserResponse
 
-router = APIRouter(prefix="/api/v1/users",tags=["Users"])
+router = APIRouter(prefix="/api/v1/users", tags=["Users"])
+
 
 @router.get("/", response_model=List[UserResponse])
 def get_users(db: Session = Depends(get_db)):
     users = db.query(models.User).all()
     return users
+
 
 @router.post(
     "/",
@@ -27,12 +29,14 @@ def register_user(user: User, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return {"status": "success", "message": f"A new user with {new_user.email} registered"}
 
+
 @router.get("/{id}", response_model=UserResponse)
 def get_user(id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()
     if user:
         return user
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"user with {id} not found")
+
 
 @router.delete("/{id}")
 def delete_user(id: int, db: Session = Depends(get_db)):
@@ -42,6 +46,7 @@ def delete_user(id: int, db: Session = Depends(get_db)):
     user_query.delete()
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 """
 not needed for now, need a patch call rather than doing put here I guess
